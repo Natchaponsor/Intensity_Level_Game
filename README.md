@@ -1,8 +1,8 @@
-# On a Scale of 1 to Top 🎭
+# Intensity Level Game 🎭
 
 A real-time multiplayer party game inspired by *On a Scale of One to T-Rex*. Players are secretly assigned an intensity level and must perform actions at that intensity — then guess who else is performing at the same level.
 
-**Live Game:** [natchaponsor.github.io/intensity-game](https://natchaponsor.github.io/intensity-game/)
+**Live Game:** [natchaponsor.github.io/intensity_level_game](https://natchaponsor.github.io/intensity_level_game/)
 
 ---
 
