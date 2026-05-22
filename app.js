@@ -233,6 +233,29 @@ function enterGameScreen() {
   const unsub = onValue(ref(db, `rooms/${roomCode}`), snap => {
     if (!snap.exists()) return;
     gameState = snap.val();
+    const phase = gameState.phase;
+
+    // Handle reveal screen for non-host
+    if (phase === "reveal") {
+      renderReveal(gameState);
+      return;
+    }
+
+    // Handle final screen
+    if (phase === "final") {
+      showFinalScreen();
+      return;
+    }
+
+    // For action and guessing phases, make sure we are on game screen
+    if (!document.getElementById("screen-game").classList.contains("active")) {
+      showScreen("game");
+      selectedGuesses = new Set();
+      hasSubmittedGuess = false;
+      hasVotedOn = {};
+      calledVoteOn = {};
+    }
+
     renderGameScreen(gameState);
   });
   unsubscribes.push(unsub);
@@ -535,16 +558,17 @@ function renderReveal(room) {
 async function nextRound() {
   const snap = await get(ref(db, `rooms/${roomCode}`));
   const room = snap.val();
-  const nextRound = room.currentRound + 1;
+  const next = room.currentRound + 1;
 
-  // Reset per-round state
+  // Reset per-round state for host
   selectedGuesses = new Set();
   hasSubmittedGuess = false;
   hasVotedOn = {};
   calledVoteOn = {};
-
   showScreen("game");
-  await startRound(room.players, nextRound);
+
+  // Write new round data — the Firebase listener will update all players
+  await startRound(room.players, next);
 }
 
 async function endGame() {
