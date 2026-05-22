@@ -2,6 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, get, update, onValue, push, remove }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { ACTION_CARDS } from "./cards.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAuxxoHSL9OR88BG-c6C8I-Q5HJh4fuSnE",
