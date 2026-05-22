@@ -1,4 +1,4 @@
-const ACTION_CARDS = {
+export const ACTION_CARDS = {
   red: [
     "Sneeze dramatically",
     "React to stepping on a Lego",
