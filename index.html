@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>On a Scale of 1 to Top</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- LANDING SCREEN -->
+  <div class="screen active" id="screen-landing">
+    <div class="lobby-box">
+      <div style="font-size:48px;margin-bottom:12px;">🎭</div>
+      <h1 class="game-title">On a Scale of 1 to Top</h1>
+      <p class="game-subtitle">A real-time intensity matching party game</p>
+      <div class="input-group">
+        <input type="text" id="player-name" placeholder="Enter your name" maxlength="20"/>
+      </div>
+      <button class="btn btn-primary" onclick="goToCreate()">Create a Room</button>
+      <div class="divider">or</div>
+      <div class="input-group">
+        <input type="text" id="join-code" placeholder="Room code" maxlength="6" style="text-transform:uppercase;letter-spacing:0.1em;text-align:center;font-size:20px;"/>
+      </div>
+      <button class="btn btn-secondary" onclick="goToJoin()">Join Room</button>
+      <p id="landing-error" class="hidden" style="color:#ef4444;font-size:13px;margin-top:12px;text-align:center;"></p>
+    </div>
+  </div>
+
+  <!-- WAITING ROOM SCREEN -->
+  <div class="screen" id="screen-waiting">
+    <div class="waiting-box">
+      <div class="room-code-display">
+        <div class="room-code-label">Room Code</div>
+        <div class="room-code-value" id="display-room-code">------</div>
+        <div style="font-size:12px;color:var(--ink-light);margin-top:6px;">Share this code with friends</div>
+      </div>
+
+      <div class="section-label">Players (<span id="player-count">0</span>)</div>
+      <div class="player-list" id="player-list"></div>
+
+      <div id="host-controls" class="hidden">
+        <div class="section-label">Rounds</div>
+        <div class="rounds-row">
+          <input type="number" id="rounds-input" value="5" min="1" max="20" style="max-width:80px;text-align:center;"/>
+          <span style="font-size:13px;color:var(--ink-mid);">rounds per game</span>
+        </div>
+        <button class="btn btn-primary" id="start-btn" onclick="startGame()">Start Game</button>
+        <p id="start-error" class="hidden" style="color:#ef4444;font-size:13px;margin-top:8px;text-align:center;"></p>
+      </div>
+
+      <div id="guest-waiting" class="hidden">
+        <p class="status-text waiting-pulse">Waiting for host to start the game...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div class="screen" id="screen-game">
+    <div class="game-screen-inner">
+
+      <!-- TOP BAR -->
+      <div class="top-bar">
+        <div class="round-info">Round <span id="current-round">1</span> of <span id="total-rounds">5</span></div>
+        <div class="phase-badge" id="phase-label">Waiting</div>
+        <div class="scores-row" id="scores-row"></div>
+      </div>
+
+      <!-- VOTE BANNERS -->
+      <div id="vote-banners"></div>
+
+      <!-- MAIN GRID -->
+      <div class="game-grid">
+
+        <!-- MY INTENSITY CARD -->
+        <div class="my-card">
+          <div class="my-card-title">My Intensity Card</div>
+          <div class="intensity-card" id="my-intensity-card">
+            <div class="intensity-number" id="my-intensity-number">?</div>
+            <div class="intensity-label" id="my-intensity-label">Waiting...</div>
+          </div>
+          <div style="font-size:12px;color:var(--ink-light);line-height:1.6;">
+            Perform the action card matching your color at this intensity level.
+          </div>
+        </div>
+
+        <!-- ACTION CARDS -->
+        <div class="action-cards-panel">
+          <div class="action-cards-title">Action Cards This Round</div>
+          <div class="action-cards-grid">
+            <div class="action-card red" id="action-card-red">
+              <div class="action-card-color">Red</div>
+              <div class="action-card-text" id="action-text-red">...</div>
+              <button class="redraw-btn" id="redraw-btn-red" onclick="callRedrawVote('red')" disabled>Vote to Redraw</button>
+            </div>
+            <div class="action-card yellow" id="action-card-yellow">
+              <div class="action-card-color">Yellow</div>
+              <div class="action-card-text" id="action-text-yellow">...</div>
+              <button class="redraw-btn" id="redraw-btn-yellow" onclick="callRedrawVote('yellow')" disabled>Vote to Redraw</button>
+            </div>
+            <div class="action-card blue" id="action-card-blue">
+              <div class="action-card-color">Blue</div>
+              <div class="action-card-text" id="action-text-blue">...</div>
+              <button class="redraw-btn" id="redraw-btn-blue" onclick="callRedrawVote('blue')" disabled>Vote to Redraw</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HOST ADVANCE BUTTON -->
+      <div id="host-advance-panel" class="hidden" style="margin-top:20px;">
+        <button class="btn btn-primary full-width" onclick="advanceToGuessing()">Everyone's ready — Start Guessing Phase &rarr;</button>
+      </div>
+
+      <!-- GUESSING PANEL -->
+      <div class="guess-panel" id="guess-panel">
+        <div class="guess-title">Who matches your intensity?</div>
+        <div class="guess-subtitle">Select all players you think have the same intensity level as you. You can pick more than one.</div>
+        <div class="players-guess-grid" id="players-guess-grid"></div>
+        <button class="btn btn-primary" onclick="submitGuesses()" id="submit-btn">Submit Guesses</button>
+        <p id="submit-status" class="status-text hidden waiting-pulse">Waiting for other players...</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- REVEAL SCREEN -->
+  <div class="screen" id="screen-reveal">
+    <div class="reveal-box">
+      <div class="reveal-title">🎭 Round <span id="reveal-round">1</span> Results</div>
+      <div class="reveal-grid" id="reveal-grid"></div>
+      <div style="margin-bottom:24px;">
+        <div class="section-label" style="margin-bottom:12px;">Leaderboard</div>
+        <div class="leaderboard" id="reveal-leaderboard"></div>
+      </div>
+      <div id="reveal-controls"></div>
+    </div>
+  </div>
+
+  <!-- FINAL SCREEN -->
+  <div class="screen" id="screen-final">
+    <div class="reveal-box" style="text-align:center;">
+      <div style="font-size:56px;margin-bottom:12px;">🏆</div>
+      <h2 class="reveal-title">Game Over!</h2>
+      <div class="section-label" style="margin-bottom:12px;">Final Leaderboard</div>
+      <div class="leaderboard" id="final-leaderboard"></div>
+      <button class="btn btn-primary mt-20" onclick="location.reload()">Play Again</button>
+    </div>
+  </div>
+
+  <script src="cards.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
