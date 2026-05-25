@@ -47,6 +47,36 @@ async function initCards() {
   }
 }
 
+// ─── REJOIN ───────────────────────────────────────────────────────────────────
+async function attemptRejoin() {
+  const snap = await get(ref(db, `rooms/${roomCode}`));
+  if (!snap.exists()) {
+    localStorage.removeItem("game_myId");
+    localStorage.removeItem("game_myName");
+    localStorage.removeItem("game_roomCode");
+    localStorage.removeItem("game_isHost");
+    showScreen("landing");
+    return;
+  }
+  const room = snap.val();
+
+  // Mark player as online again
+  await update(ref(db, `rooms/${roomCode}/players/${myId}`), { online: true });
+
+  if (room.status === "waiting") {
+    enterWaitingRoom();
+  } else if (room.status === "playing") {
+    gameState = room;
+    enterGameScreen();
+  } else {
+    // Game finished, clear and go to landing
+    localStorage.removeItem("game_myId");
+    localStorage.removeItem("game_myName");
+    localStorage.removeItem("game_roomCode");
+    localStorage.removeItem("game_isHost");
+  }
+}
+
 // Boot: load cards then expose functions
 initCards().then(() => {
   window.goToCreate = goToCreate;
@@ -59,6 +89,17 @@ initCards().then(() => {
   window.submitGuesses = submitGuesses;
   window.nextRound = nextRound;
   window.endGame = endGame;
+
+  // Check for saved session on page load
+  const savedRoom = localStorage.getItem("game_roomCode");
+  const savedId = localStorage.getItem("game_myId");
+  if (savedRoom && savedId) {
+    myId = savedId;
+    myName = localStorage.getItem("game_myName");
+    roomCode = savedRoom;
+    isHost = localStorage.getItem("game_isHost") === "true";
+    attemptRejoin();
+  }
 });
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -122,6 +163,11 @@ async function goToCreate() {
     }
   });
 
+  localStorage.setItem("game_myId", myId);
+  localStorage.setItem("game_myName", myName);
+  localStorage.setItem("game_roomCode", roomCode);
+  localStorage.setItem("game_isHost", isHost);
+
   enterWaitingRoom();
 }
 
@@ -143,6 +189,11 @@ async function goToJoin() {
   await set(ref(db, `rooms/${roomCode}/players/${myId}`), {
     name: myName, score: 10, online: true
   });
+
+  localStorage.setItem("game_myId", myId);
+  localStorage.setItem("game_myName", myName);
+  localStorage.setItem("game_roomCode", roomCode);
+  localStorage.setItem("game_isHost", isHost);
 
   enterWaitingRoom();
 }
@@ -573,6 +624,10 @@ async function nextRound() {
 
 async function endGame() {
   await update(ref(db, `rooms/${roomCode}`), { status: "finished", phase: "final" });
+  localStorage.removeItem("game_myId");
+  localStorage.removeItem("game_myName");
+  localStorage.removeItem("game_roomCode");
+  localStorage.removeItem("game_isHost");
   showFinalScreen();
 }
 
