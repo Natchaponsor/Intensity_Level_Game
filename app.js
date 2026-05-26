@@ -102,6 +102,7 @@ initCards().then(() => {
   window.submitGuesses = submitGuesses;
   window.nextRound = nextRound;
   window.endGame = endGame;
+  window.confirmEndGame = confirmEndGame;
 
   // Check for saved session on page load
   const savedRoom = localStorage.getItem("game_roomCode");
@@ -388,12 +389,19 @@ function renderGameScreen(room) {
   const hostAdvance = document.getElementById("host-advance-panel");
   if (room.phase === "action") {
     document.getElementById("guess-panel").classList.add("hidden");
-    if (isHost) hostAdvance.classList.remove("hidden");
-    else hostAdvance.classList.add("hidden");
+    if (isHost) {
+    hostAdvance.classList.remove("hidden");
+    document.getElementById("end-game-early-panel").classList.remove("hidden");
+    } else {
+      hostAdvance.classList.add("hidden");
+      document.getElementById("end-game-early-panel").classList.add("hidden");
+    }
   } else if (room.phase === "guessing") {
     hostAdvance.classList.add("hidden");
     document.getElementById("guess-panel").classList.remove("hidden");
     renderGuessPanel(room);
+    if (isHost) document.getElementById("end-game-early-panel").classList.remove("hidden");
+    else document.getElementById("end-game-early-panel").classList.add("hidden");
   } else if (room.phase === "reveal") {
     hostAdvance.classList.add("hidden");
     renderReveal(room);
@@ -652,8 +660,28 @@ async function nextRound() {
   await startRound(room.players, next);
 }
 
+function confirmEndGame() {
+  const confirmed = window.confirm(
+    "End the game now?\n\nAll scores will be cleared and the room will close. This cannot be undone."
+  );
+  if (confirmed) endGame();
+}
+
 async function endGame() {
-  await update(ref(db, `rooms/${roomCode}`), { status: "finished", phase: "final" });
+  // Reset all player scores to 0 before closing
+  const snap = await get(ref(db, `rooms/${roomCode}`));
+  if (snap.exists()) {
+    const players = snap.val().players || {};
+    const scoreResets = {};
+    Object.keys(players).forEach(pid => {
+      scoreResets[`players/${pid}/score`] = 0;
+    });
+    await update(ref(db, `rooms/${roomCode}`), {
+      ...scoreResets,
+      status: "finished",
+      phase: "final",
+    });
+  }
   localStorage.removeItem("game_myId");
   localStorage.removeItem("game_myName");
   localStorage.removeItem("game_roomCode");
